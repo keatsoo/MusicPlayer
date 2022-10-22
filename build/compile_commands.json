@@ -1,7 +1,0 @@
-[
-{
-  "directory": "/home/mohamed/Documents/Coding/CPP/MusicPlayer/build",
-  "command": "/usr/bin/g++ -g -o CMakeFiles/MusicPlayer.dir/src/main.cpp.o -c /home/mohamed/Documents/Coding/CPP/MusicPlayer/src/main.cpp",
-  "file": "/home/mohamed/Documents/Coding/CPP/MusicPlayer/src/main.cpp"
-}
-]
