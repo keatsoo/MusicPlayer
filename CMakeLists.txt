@@ -6,7 +6,9 @@ enable_testing()
 
 add_executable(MusicPlayer src/main.cpp)
 
-target_link_libraries(MusicPlayer include/libportaudio.a)
+INCLUDE_DIRECTORIES(include)
+LINK_DIRECTORIES(include)
+target_link_libraries(MusicPlayer libportaudio.a)
 
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})
 set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})
