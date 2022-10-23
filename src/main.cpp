@@ -1,9 +1,9 @@
 #include <iostream>
-#include "../include/portaudio.h"
+#include <portaudio.h>
 #include <math.h>
 #define SAMPLE_RATE 44100
 #define PLAY_DURATION 5
-#define TABLE_SIZE 440 // frequency ????
+#define TABLE_SIZE 880 // frequency ????
 
 // callback, will repeatedly be called a thourought the program to compute the data
 int MusicPlayerCallback(const void* input,
@@ -44,6 +44,8 @@ int main(int, char**) {
     // uninit the library
     err = Pa_Terminate();
     if (err != paNoError) std::cout << "PortAudio error : " << Pa_GetErrorText(err);
+
+    return 0;
 }
 
 
