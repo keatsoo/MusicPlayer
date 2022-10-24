@@ -2,7 +2,7 @@
 
 Plays music out of a "music-assembly" file.
 
-TO DO :
+__TO DO :__
 - [x] Incorporate a frequency system
 - [ ] Incorporate a tempo system
 - [ ] Stereo sound
