@@ -1,6 +1,8 @@
 # MusicPlayer
 
-plays music ig
+Plays music out of an assembly-looking file.
+
+
 
 To build :
 ```

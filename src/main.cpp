@@ -2,9 +2,9 @@
 #include <portaudio.h>
 #include <math.h>
 #define SAMPLE_RATE 44100
-#define PLAY_DURATION 5
-#define TABLE_SIZE 32
-
+#define PLAY_DURATION 2
+#define TABLE_SIZE 100
+// FREQ = SAMPLE_RATE/TABLE_SIZE
 
 // callback, will repeatedly be called a thourought the program to compute the data
 int MusicPlayerCallback(const void* input,
@@ -19,21 +19,17 @@ int MusicPlayerCallback(const void* input,
 PaStream* stream;
 
 // data structure that will allow the storage of the sound data
-struct MP_StreamData { float data[TABLE_SIZE]; };
+struct MP_StreamData { float data; };
 MP_StreamData data;
 
-double frequency = 440.0;
-double amplitude = 1.0;
+double base_frequency = 110.0; // La 2
+double amplitude = 0.3;
+
+double semitones = 24;
+double _12thRootOf2  = pow(2.0, 1.0/12.0);
+double frequency = base_frequency * pow(_12thRootOf2, semitones);
 
 int main(int, char**) {
-    // initialize the sine values
-    for (size_t i = 0; i < TABLE_SIZE; i++)
-    {
-        data.data[i] = (float) (amplitude * sin( frequency * 2.0 * 3.141592653589 * ((double) i) ));
-        std::cout << data.data[i] << "\n";
-    }
-    
-
     // init the library and check for errors
     PaError err = Pa_Initialize();
     if (err != paNoError) std::cout << "PortAudio error : " << Pa_GetErrorText(err);
@@ -64,12 +60,29 @@ int MusicPlayerCallback(const void* input,
     MP_StreamData* data = (MP_StreamData*) userData;
     float* out = (float*) output;
 
-    unsigned int i;
     (void) input;
+    (void) timeInfo;
+    (void) StatusFlags;
 
-    for (i = 0; i < frameCount; i++)
+    float outValue = 0;
+
+    static unsigned long n;
+
+    for (unsigned long i = 0; i < frameCount; i++, n++)
     {
-        *out++ = data->data[(int)i];
+
+        data->data = (float) (amplitude * sin(n * frequency * 2 * 3.141592653589 / (double) SAMPLE_RATE));
+
+        if (data->data > 0)
+        {
+            outValue = 0.2;
+        }
+        else
+        {
+            outValue = -0.2;
+        }
+
+        *out++ = outValue;
     }
     
     return 0;
