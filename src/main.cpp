@@ -1,8 +1,9 @@
 #include <iostream>
 #include <portaudio.h>
 #include <math.h>
+#include <chrono>
 #define SAMPLE_RATE 44100
-#define PLAY_DURATION 2
+#define PLAY_DURATION 25
 #define TABLE_SIZE 100
 // FREQ = SAMPLE_RATE/TABLE_SIZE
 
@@ -15,6 +16,7 @@ int MusicPlayerCallback(const void* input,
                     PaStreamCallbackFlags StatusFlags,
                     void* userData);
 
+double timePassed();
 // stream pointer
 PaStream* stream;
 
@@ -29,7 +31,12 @@ double semitones = 24;
 double _12thRootOf2  = pow(2.0, 1.0/12.0);
 double frequency = base_frequency * pow(_12thRootOf2, semitones);
 
+std::chrono::time_point<std::chrono::high_resolution_clock> start;
+std::chrono::time_point<std::chrono::high_resolution_clock> now;
+
 int main(int, char**) {
+    start = std::chrono::high_resolution_clock::now();
+
     // init the library and check for errors
     PaError err = Pa_Initialize();
     if (err != paNoError) std::cout << "PortAudio error : " << Pa_GetErrorText(err);
@@ -64,26 +71,42 @@ int MusicPlayerCallback(const void* input,
     (void) timeInfo;
     (void) StatusFlags;
 
-    float outValue = 0;
-
     static unsigned long n;
+    static const double beat = 1.0;
+
+    // harcoded melody goes here
+
+
+    frequency = base_frequency * pow(_12thRootOf2, semitones);
+    double freq = frequency;
 
     for (unsigned long i = 0; i < frameCount; i++, n++)
     {
 
-        data->data = (float) (amplitude * sin(n * frequency * 2 * 3.141592653589 / (double) SAMPLE_RATE));
+        data->data = (float) (amplitude * sin(n * freq * 2 * 3.141592653589 / (double) SAMPLE_RATE));
 
         if (data->data > 0)
         {
-            outValue = 0.2;
+            *out++ = 0.2;
+        }
+        else if (data->data < 0)
+        {
+            *out++ = -0.2;
         }
         else
         {
-            outValue = -0.2;
+            *out++ = 0;
         }
 
-        *out++ = outValue;
+        std:: cout << timePassed() << "\n";
+
     }
     
     return 0;
+}
+
+double timePassed () {
+    now = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> elapsed = now - start;
+    return elapsed.count();
 }
