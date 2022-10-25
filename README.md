@@ -7,6 +7,7 @@ __TO DO :__
 - [x] Incorporate a tempo system (normally it works????)
 - [x] Stereo sound
 - [x] Able to play a hardcoded melody
+- [x] Able to read a song out of an array
 - [ ] Create a syntax
 - [ ] Create a reader for the syntax
 - [ ] Able to read music off a "music-assembly" file

@@ -2,13 +2,15 @@
 #include <portaudio.h>
 #include <math.h>
 #include <chrono>
+#include <vector>
+#include "Note.hpp"
 #define SAMPLE_RATE 44100
-#define PLAY_DURATION 1
+#define PLAY_DURATION 20
 #define TABLE_SIZE 100
 #define NUMBER_OF_CHANNELS 2
 // FREQ = SAMPLE_RATE/TABLE_SIZE
 
-// callback, will repeatedly be called a thourought the program to compute the data
+// callback, will repeatedly be called thourought the program to compute the data
 int MusicPlayerCallback(const void* input,
                     void* output,
                     unsigned long
@@ -17,12 +19,22 @@ int MusicPlayerCallback(const void* input,
                     PaStreamCallbackFlags StatusFlags,
                     void* userData);
 
+// computes how much time passed since the beginning
 double timePassed();
+
 // stream pointer
 PaStream* stream;
 
 // data structure that will allow the storage of the sound data
-struct MP_StreamData { float dataL; float dataR; double tempoL; double tempoR; };
+struct MP_StreamData
+{
+    float dataL;
+    float dataR;
+    double tempoL;
+    double tempoR;
+    std::vector<Note> notesToPlay;
+};
+
 MP_StreamData data;
 
 double base_frequency = 110.0; // La 2
@@ -36,15 +48,40 @@ double _12thRootOf2  = pow(2.0, 1.0/12.0);
 double frequencyL;
 double frequencyR;
 
+int musicLength;
+
 
 std::chrono::time_point<std::chrono::high_resolution_clock> start;
 std::chrono::time_point<std::chrono::high_resolution_clock> now;
 
 
 // MAIN ====================================================
-int main(int, char**) {
+int main(int, char**)
+{
     data.tempoL = 60;
     data.tempoR = 60;
+
+    Note notesToPlay[6] = {
+        Note(1, 22),
+        Note(3, 31),
+        Note(0.25, 26),
+        Note(0.25, 27),
+        Note(0.5, 28),
+        Note(1.5, 22)
+    };
+
+    for (size_t i = 0; i < (sizeof(notesToPlay) / sizeof(notesToPlay[0])); i++)
+    {
+        data.notesToPlay.push_back(notesToPlay[i]);
+    }
+    musicLength = data.notesToPlay.size();
+
+    /*int notesToPlay[18] = {22, 31, 26, 27, 28, 22,
+                        34, 31, 32,
+                        34, 31, 32,
+                        34, 28, 29,
+                        32, 26, 27};
+    */
     
     // init the library and check for errors
     PaError err = Pa_Initialize();
@@ -69,6 +106,7 @@ int main(int, char**) {
 
 
 // CALLBACK =====================================================
+
 int MusicPlayerCallback(const void* input,
                     void* output,
                     unsigned long
@@ -86,10 +124,35 @@ int MusicPlayerCallback(const void* input,
 
     static unsigned long nL;
     static unsigned long nR;
-    static const double beatL = data->tempoL/60.0;
+    static double beatL = data->tempoL/60.0;
+    static double beatR = data->tempoL/60.0;
 
-    // hardcoded melody goes here 
+    static int pointInMusic;
+    static double o_maxTimeOfNote;
+    static double maxTimeOfNote;
 
+    if (maxTimeOfNote == 0)
+    {
+        maxTimeOfNote += data->notesToPlay[0].getDuration();
+    }
+
+    if (timePassed() > maxTimeOfNote)
+    {
+        pointInMusic++;
+        maxTimeOfNote += data->notesToPlay[pointInMusic].getDuration();
+    }
+
+    if (timePassed() > o_maxTimeOfNote && timePassed() <= maxTimeOfNote && pointInMusic < musicLength)
+    {
+        semitonesL = data->notesToPlay[pointInMusic].getSemitones();
+        semitonesR = data->notesToPlay[pointInMusic].getSemitones();
+    }
+    else if (pointInMusic >= musicLength)
+    {
+        amplitudeL = 0;
+        amplitudeR = 0;
+    }
+    
     frequencyL = base_frequency * pow(_12thRootOf2, semitonesL);
     double freqL = frequencyL;
 
@@ -113,7 +176,8 @@ int MusicPlayerCallback(const void* input,
             *out++ = 0;
         }
 
-        if (NUMBER_OF_CHANNELS > 1) {
+        if (NUMBER_OF_CHANNELS > 1)
+        {
             data->dataR = (float) (amplitudeR * sin(nR * freqR * 2 * 3.141592653589 / (double) SAMPLE_RATE));
             if (data->dataR > 0)
             {
@@ -129,11 +193,9 @@ int MusicPlayerCallback(const void* input,
             }
         }
 
-
-
-        std:: cout << timePassed() << "\n";
-
     }
+
+    o_maxTimeOfNote = maxTimeOfNote;
     
     return 0;
 }
@@ -141,7 +203,9 @@ int MusicPlayerCallback(const void* input,
 
 
 // OTHER FUNCTIONS =======================================================
-double timePassed () {
+
+double timePassed ()
+{
     now = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> elapsed = now - start;
     return elapsed.count();
