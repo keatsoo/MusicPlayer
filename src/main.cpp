@@ -4,8 +4,10 @@
 #include <chrono>
 #include <vector>
 #include "Note.hpp"
+#include <fstream>
+
 #define SAMPLE_RATE 44100
-#define PLAY_DURATION 20
+#define PLAY_DURATION 25
 #define TABLE_SIZE 100
 #define NUMBER_OF_CHANNELS 2
 // FREQ = SAMPLE_RATE/TABLE_SIZE
@@ -60,28 +62,6 @@ int main(int, char**)
 {
     data.tempoL = 60;
     data.tempoR = 60;
-
-    Note notesToPlay[6] = {
-        Note(1, 22),
-        Note(3, 31),
-        Note(0.25, 26),
-        Note(0.25, 27),
-        Note(0.5, 28),
-        Note(1.5, 22)
-    };
-
-    for (size_t i = 0; i < (sizeof(notesToPlay) / sizeof(notesToPlay[0])); i++)
-    {
-        data.notesToPlay.push_back(notesToPlay[i]);
-    }
-    musicLength = data.notesToPlay.size();
-
-    /*int notesToPlay[18] = {22, 31, 26, 27, 28, 22,
-                        34, 31, 32,
-                        34, 31, 32,
-                        34, 28, 29,
-                        32, 26, 27};
-    */
     
     // init the library and check for errors
     PaError err = Pa_Initialize();
@@ -131,6 +111,8 @@ int MusicPlayerCallback(const void* input,
     static double o_maxTimeOfNote;
     static double maxTimeOfNote;
 
+    static bool musicFinished;
+
     if (maxTimeOfNote == 0)
     {
         maxTimeOfNote += data->notesToPlay[0].getDuration();
@@ -151,6 +133,8 @@ int MusicPlayerCallback(const void* input,
     {
         amplitudeL = 0;
         amplitudeR = 0;
+
+        std::cout << "Song finished ! \n";
     }
     
     frequencyL = base_frequency * pow(_12thRootOf2, semitonesL);
