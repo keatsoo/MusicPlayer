@@ -5,7 +5,7 @@ Plays music out of a "music-assembly" file.
 __TO DO :__
 - [x] Incorporate a frequency system
 - [x] Incorporate a tempo system (normally it works????)
-- [ ] Stereo sound
+- [x] Stereo sound
 - [x] Able to play a hardcoded melody
 - [ ] Create a syntax
 - [ ] Create a reader for the syntax
@@ -17,7 +17,7 @@ To build :
 g++ -o MusicPlayer src/main.cpp -lrt -lasound -ljack -lpthread -lportaudio
 ```
 
-OMORI Title Screen (hardcoded melody), enter it in the callback function :
+OMORI Title Screen (hardcoded melody), enter it in the callback function (you need to adapt it because of the stereo function) :
 
 ```cpp
 if (timePassed() <= beat) semitones = 22;
