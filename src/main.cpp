@@ -3,7 +3,7 @@
 #include <math.h>
 #include <chrono>
 #define SAMPLE_RATE 44100
-#define PLAY_DURATION 25
+#define PLAY_DURATION 1
 #define TABLE_SIZE 100
 // FREQ = SAMPLE_RATE/TABLE_SIZE
 
@@ -31,15 +31,18 @@ double semitones = 24;
 double _12thRootOf2  = pow(2.0, 1.0/12.0);
 double frequency = base_frequency * pow(_12thRootOf2, semitones);
 
+double tempo = 60;
+
 std::chrono::time_point<std::chrono::high_resolution_clock> start;
 std::chrono::time_point<std::chrono::high_resolution_clock> now;
 
-int main(int, char**) {
-    start = std::chrono::high_resolution_clock::now();
 
+int main(int, char**) {
     // init the library and check for errors
     PaError err = Pa_Initialize();
     if (err != paNoError) std::cout << "PortAudio error : " << Pa_GetErrorText(err);
+
+    start = std::chrono::high_resolution_clock::now();
 
     // open a stream
     err = Pa_OpenDefaultStream(&stream, 0, 1, paFloat32, SAMPLE_RATE, 64, MusicPlayerCallback, &data);
@@ -72,10 +75,9 @@ int MusicPlayerCallback(const void* input,
     (void) StatusFlags;
 
     static unsigned long n;
-    static const double beat = 1.0;
+    static const double beat = tempo/60.0;
 
-    // harcoded melody goes here
-
+    // hardcoded melody goes here 
 
     frequency = base_frequency * pow(_12thRootOf2, semitones);
     double freq = frequency;
@@ -98,7 +100,7 @@ int MusicPlayerCallback(const void* input,
             *out++ = 0;
         }
 
-        std:: cout << timePassed() << "\n";
+        std:: cout << timePassed() << " for beat = " << beat << " and tempo = " << tempo << " bpm.\n";
 
     }
     

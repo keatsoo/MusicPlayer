@@ -4,11 +4,11 @@ Plays music out of a "music-assembly" file.
 
 __TO DO :__
 - [x] Incorporate a frequency system
-- [ ] Incorporate a tempo system
+- [x] Incorporate a tempo system (normally it works????)
 - [ ] Stereo sound
 - [x] Able to play a hardcoded melody
 - [ ] Create a syntax
-- [ ] Able to read a file
+- [ ] Create a reader for the syntax
 - [ ] Able to read music off a "music-assembly" file
 - [ ] General improvements and bug-fixing
 
