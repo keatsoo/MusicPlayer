@@ -7,9 +7,9 @@
 #include <fstream>
 #include <string>
 #include <algorithm>
+#include <cmath>
 
 #define SAMPLE_RATE 44100
-#define PLAY_DURATION 300
 #define TABLE_SIZE 100
 #define NUMBER_OF_CHANNELS 2
 
@@ -52,6 +52,7 @@ double frequencyL;
 double frequencyR;
 
 int musicLength;
+int playDuration;
 
 double noteToSemitone (std::string note);
 
@@ -135,6 +136,7 @@ int main(int, char**)
                     readingNote = false;
 
                     data.notesToPlay.push_back(Note(std::stod(durationString), noteToSemitone(noteString)));
+                    playDuration += int (std::ceil(std::stod(durationString)) * data.tempoL / 60.0);
                     std::cout << "pushed back with duration = " << std::stod(durationString) << " and semitones = " << noteToSemitone(noteString) << "\n";
 
                     durationString = "";
@@ -148,6 +150,7 @@ int main(int, char**)
             {
                 data.notesToPlay.push_back(Note(1, -255));
                 musicLength = data.notesToPlay.size();
+                std::cout << "Duration : " << playDuration << "\n";
                 break;
             }
             
@@ -166,7 +169,7 @@ int main(int, char**)
         err = Pa_OpenDefaultStream(&stream, 0, NUMBER_OF_CHANNELS, paFloat32, SAMPLE_RATE, 64, MusicPlayerCallback, &data);
 
         err = Pa_StartStream(stream);
-        Pa_Sleep(PLAY_DURATION * 1000);
+        Pa_Sleep(playDuration * 1000);
         err = Pa_CloseStream(stream);
 
         // uninit the library
