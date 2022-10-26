@@ -5,12 +5,13 @@
 #include <vector>
 #include "Note.hpp"
 #include <fstream>
+#include <string>
+#include <algorithm>
 
 #define SAMPLE_RATE 44100
-#define PLAY_DURATION 25
+#define PLAY_DURATION 300
 #define TABLE_SIZE 100
 #define NUMBER_OF_CHANNELS 2
-// FREQ = SAMPLE_RATE/TABLE_SIZE
 
 // callback, will repeatedly be called thourought the program to compute the data
 int MusicPlayerCallback(const void* input,
@@ -52,6 +53,7 @@ double frequencyR;
 
 int musicLength;
 
+double noteToSemitone (std::string note);
 
 std::chrono::time_point<std::chrono::high_resolution_clock> start;
 std::chrono::time_point<std::chrono::high_resolution_clock> now;
@@ -60,25 +62,121 @@ std::chrono::time_point<std::chrono::high_resolution_clock> now;
 // MAIN ====================================================
 int main(int, char**)
 {
-    data.tempoL = 60;
-    data.tempoR = 60;
-    
-    // init the library and check for errors
-    PaError err = Pa_Initialize();
-    if (err != paNoError) std::cout << "PortAudio error : " << Pa_GetErrorText(err);
 
-    start = std::chrono::high_resolution_clock::now();
+    std::ifstream file;
+    std::cout << "Enter your file's directory : ";
+    std::string fileDir;
+    std::cin >> fileDir;
+    file.open (fileDir);
 
-    // open a stream
-    err = Pa_OpenDefaultStream(&stream, 0, NUMBER_OF_CHANNELS, paFloat32, SAMPLE_RATE, 64, MusicPlayerCallback, &data);
+    if (file.is_open())
+    {
+        char myChar;
+        bool readingTempo = false;
+        std::string tempoString;
 
-    err = Pa_StartStream(stream);
-    Pa_Sleep(PLAY_DURATION * 1000);
-    err = Pa_CloseStream(stream);
+        bool readingNote = false;
+        int passedSpaces = 0;
 
-    // uninit the library
-    err = Pa_Terminate();
-    if (err != paNoError) std::cout << "PortAudio error : " << Pa_GetErrorText(err);
+        double myDuration;
+        double myNote;
+
+        std::string noteString;
+        std::string durationString;
+
+        while (file)
+        {
+            myChar = file.get();
+            std::cout << myChar;
+
+            if (myChar == 'T' || myChar == 't')
+            {
+                readingTempo = true;
+            }
+
+            if (readingTempo)
+            {
+                if (myChar != ' ' && myChar != '\n' && myChar != 'T' && myChar != 't')
+                {
+                    tempoString += myChar;
+                }
+                else if (myChar == '\n')
+                {
+                    data.tempoL = std::stod(tempoString);
+                    data.tempoR = std::stod(tempoString);
+                    readingTempo = false;
+                    std::cout << "tempo is of : " << data.tempoL << "\n";
+                }
+            }
+
+
+            if (myChar == 'N' || myChar == 'n')
+            {
+                readingNote = true;
+            }
+
+            if (readingNote)
+            {
+                if (myChar == ' ')
+                {
+                    passedSpaces++;
+                }
+
+                if (myChar != ' ' && myChar != '\n' && myChar != 'N' && myChar != 'n' && passedSpaces == 1) {
+                    noteString += myChar;
+                }
+                
+                if (myChar != ' ' && myChar != '\n' && myChar != 'N' && myChar != 'n' && passedSpaces == 2)
+                {
+                    durationString += myChar;
+                }
+                
+                if (myChar == '\n') {
+                    readingNote = false;
+
+                    data.notesToPlay.push_back(Note(std::stod(durationString), noteToSemitone(noteString)));
+                    std::cout << "pushed back with duration = " << std::stod(durationString) << " and semitones = " << noteToSemitone(noteString) << "\n";
+
+                    durationString = "";
+                    noteString = "";
+                    passedSpaces = 0;
+                }
+                
+            }
+
+            if (myChar == 'Z' || myChar == 'z')
+            {
+                data.notesToPlay.push_back(Note(1, -255));
+                musicLength = data.notesToPlay.size();
+                break;
+            }
+            
+            
+            
+        }
+        
+        
+        // init the library and check for errors
+        PaError err = Pa_Initialize();
+        if (err != paNoError) std::cout << "PortAudio error : " << Pa_GetErrorText(err);
+
+        start = std::chrono::high_resolution_clock::now();
+
+        // open a stream
+        err = Pa_OpenDefaultStream(&stream, 0, NUMBER_OF_CHANNELS, paFloat32, SAMPLE_RATE, 64, MusicPlayerCallback, &data);
+
+        err = Pa_StartStream(stream);
+        Pa_Sleep(PLAY_DURATION * 1000);
+        err = Pa_CloseStream(stream);
+
+        // uninit the library
+        err = Pa_Terminate();
+        if (err != paNoError) std::cout << "PortAudio error : " << Pa_GetErrorText(err); 
+    }
+    else
+    {
+        std::cout << "Uh oh! Unable to open file! Maybe have you entered the wrong directory? \n";
+    }
 
     return 0;
 }
@@ -129,12 +227,10 @@ int MusicPlayerCallback(const void* input,
         semitonesL = data->notesToPlay[pointInMusic].getSemitones();
         semitonesR = data->notesToPlay[pointInMusic].getSemitones();
     }
-    else if (pointInMusic >= musicLength)
+    else if (pointInMusic >= musicLength || data->notesToPlay[pointInMusic].getSemitones() == -255)
     {
         amplitudeL = 0;
         amplitudeR = 0;
-
-        std::cout << "Song finished ! \n";
     }
     
     frequencyL = base_frequency * pow(_12thRootOf2, semitonesL);
@@ -193,4 +289,36 @@ double timePassed ()
     now = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> elapsed = now - start;
     return elapsed.count();
+}
+
+double noteToSemitone (std::string note) {
+    std::vector<std::string> notes;
+    std::vector<double> semitones;
+    int index;
+    
+    for (double i = -33; i < 107; i++)
+    {
+        semitones.push_back(i);
+    }
+
+    std::vector<std::string> noteLetters = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
+    
+    for (size_t d = 0; d <= 8; d++)
+    {
+        for (size_t i = 0; i < noteLetters.size(); i++)
+        {
+            notes.push_back(noteLetters[i] + std::to_string(d)); 
+        }
+    }
+    
+    std::vector<std::string>::iterator it = std::find(notes.begin(), notes.end(), note);
+
+    if (it != notes.end())
+    {
+        // std::cout << "note found!!\n";
+        index = std::distance(notes.begin(), it);
+    }
+
+    return semitones[index];
+    
 }

@@ -8,15 +8,20 @@ __TO DO :__
 - [x] Stereo sound
 - [x] Able to play a hardcoded melody
 - [x] Able to read a song out of an array
-- [ ] Create a syntax
-- [ ] Create a reader for the syntax
-- [ ] Able to read music off a "music-assembly" file
+- [x] Create a syntax
+- [x] Create a reader for the syntax
+- [x] Able to read music off a "music-assembly" file
 - [ ] General improvements and bug-fixing
 
 To build :
 ```
 g++ -o MusicPlayer src/main.cpp -lrt -lasound -ljack -lpthread -lportaudio
 ```
+
+__Syntax :__ (don't include the brackets)
+- `T <bpm>` sets the tempo to `<bpm>`
+- `N <note> <duration>` adds a note `<note>` of duration `<duration>` (note : only use # and never bémol, as it won't work)
+- `Z` ends the music
 
 OMORI Title Screen (hardcoded melody), enter it in the callback function (you need to adapt it because of the stereo function) :
 ```cpp
